@@ -1,0 +1,32 @@
+
+
+//FFT: Tree Complex -> Tree Complex
+(FFT (Leaf x)) = (Leaf x)
+(FFT (Both a b)) =
+    let evens = (FFT a)
+    let odds = (FFT b)
+    let n = (Tree.length (Both a b))
+    let ws = (Map (λx(W n x)) (Range 0 n))
+    let delta = (Zip (λaλb(Complex.mul a b)) ws odds)
+    let left = (Zip (λaλb(Complex.add a b)) evens delta)
+    let right = (Zip (λaλb(Complex.sub a b)) evens delta)
+    (Both left right)
+
+//AddLeftLeaf: Integer -> Tree a -> Tree a
+(AddLeftLeaf v (Leaf x)) = (Both (Leaf v) (Leaf x))
+(AddLeftLeaf v (Both a b)) = (Both (AddLeftLeaf v a) b)
+
+//AddRightLeaf: Integer -> Tree a -> Tree a
+(AddRightLeaf v (Leaf x)) = (Both (Leaf x) (Leaf v))
+(AddRightLeaf v (Both a b)) = (Both a (AddRightLeaf v b))
+
+//GenTree: Integer -> Tree a -> Tree a
+(GenTree 0 t) = (t)
+(GenTree 1 t) = (t)
+(GenTree 2 t) = (AddLeftLeaf 1 (AddRightLeaf 2 t))
+(GenTree n t) = (GenTree (- n 2) (AddLeftLeaf (- n 1) (AddRightLeaf n t)))
+
+// hvm run ./examples/fft/complex_fft.hvm
+(Main n) =
+    let t = (GenTree 1048 (Both (Leaf 0) (Leaf 1)))
+    (FFT t)
