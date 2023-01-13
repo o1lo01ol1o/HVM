@@ -1,0 +1,57 @@
+
+(Church.Bool.true) = (λt λf (t))
+(Church.Bool.false) = λt λf (f)
+(Church.Bool.not) =  λp λa λb (p b a)
+(True) = "True"
+(False) = "False"
+(Church.Bool.toBool) = λv ((Church.ifElse) v True False)
+(Church.ifElse) = λtv λthen λelse (tv then else)
+(Church.Nat.zero) = λf λx (x)
+(Church.Nat.one) = λf λx (f x)
+(Church.Nat.isZero) = λn (n (λx (Church.Bool.false)) Church.Bool.true)
+Church.Nat.succ = λn λf λx (f (n f x))
+(Church.Nat.toChurch 0) = (λf λx (x))
+(Church.Nat.toChurch n) =
+    let next = (Church.Nat.toChurch(- n 1))
+    (λf λx (f (next f x)))
+
+(Church.Nat.toNat a) =  (a (λb (+ b 1)) 0)
+
+(Church.pair) = λa λb (λg (g a b))
+(Church.fst) =  λp (p (λx λy (x)))
+(Church.snd) =  λp (p (λx λy (y)))
+
+(Church.Nat.add) =λm λn
+    (λf λx (m f (n f x)))
+(Church.Nat.mult) = λm λn λf (m (n f))
+(Church.Nat.toChurchInt) = λi
+    ((Church.pair) i (λf λx (x)))
+
+(Church.Int.neg) = λx
+    ((Church.pair) ((Church.snd) x) ((Church.fst) x))
+
+(Church.Int.toInt x) =
+    (Tuple (Church.toNat ((Church.fst) x)) (Church.toNat ((Church.snd) x)))
+
+(IntToChurchInt i) = (ChurchNatToChurchInt (NatToChurch i))
+
+Church.Bool.and = λa λb (a b Church.Bool.false)
+Church.Bool.or = λa λb (a Church.Bool.true b)
+Church.Bool.test = ((Church.Bool.toBool) ((Church.Bool.or) (Church.Bool.false) (Church.Bool.false)))
+
+Church.List.nil = ((Church.pair) (Church.Bool.true) (Church.Bool.true))
+Church.List.isNil = (Church.fst)
+Church.List.cons = λh λt ((Church.pair) (Church.Bool.false) ((Church.pair) h t))
+Church.List.head = λz ((Church.fst) ((Church.snd) z))
+Church.List.tail = λz ((Church.snd) ((Church.snd) z))
+
+Church.List.test =
+    let t = ((Church.List.cons) (Church.Bool.false) (Church.List.nil))
+    let h = ((Church.List.cons) (Church.Bool.true) t)
+    let shouldBeTrue = ((Church.List.head) h)
+    let shouldBeFalse = ((Church.List.head) ((Church.List.tail) h))
+    ((Church.Bool.toBool) ((Church.Bool.and) shouldBeTrue ((Church.Bool.not) shouldBeFalse)))
+
+(Main) =
+    (Church.List.test)
+
