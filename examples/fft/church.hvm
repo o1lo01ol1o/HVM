@@ -1,14 +1,27 @@
 
-(Church.Bool.true) = (λt λf (t))
+(Church.Bool.true) = λt λf (t)
 (Church.Bool.false) = λt λf (f)
 (Church.Bool.not) =  λp λa λb (p b a)
+// -- Church XOR
+// -- λa.λb.a (not b) b
+(Church.Bool.xor) = λa λb (a ((Church.Bool.not) b) b)
+(Church.Bool.xor_test) =
+    let shouldBeTrue = (((Church.Bool.xor) (Church.Bool.true) (Church.Bool.false)))
+    let shouldBeFalse = (((Church.Bool.xor) (Church.Bool.true) (Church.Bool.true)))
+    ((Church.Bool.toBool) ((Church.Bool.and) shouldBeTrue shouldBeFalse))
 (True) = "True"
 (False) = "False"
 (Church.Bool.toBool) = λv ((Church.ifElse) v True False)
+(Church.Bool.test_not_false_is_true) = ((Church.Bool.toBool) ((Church.Bool.not) (Church.Bool.false)))
+(Church.Bool.test_not_true_is_false) = ((Church.Bool.toBool) ((Church.Bool.not) (Church.Bool.true)))
 (Church.ifElse) = λtv λthen λelse (tv then else)
 (Church.Nat.zero) = λf λx (x)
 (Church.Nat.one) = λf λx (f x)
 (Church.Nat.isZero) = λn (n (λx (Church.Bool.false)) Church.Bool.true)
+(Church.Nat.test_zero_is_zero) =
+    let zIsz =  ((Church.Nat.isZero) (Church.Nat.zero))
+    let oNotz = ((Church.Boo.not) ((Church.Nat.isZero) (Church.Nat.one)))
+    ((Church.Bool.toBool) ((Church.Bool.and) zIsz oNotz))
 Church.Nat.succ = λn λf λx (f (n f x))
 (Church.Nat.toChurch 0) = (λf λx (x))
 (Church.Nat.toChurch n) =
@@ -24,6 +37,27 @@ Church.Nat.succ = λn λf λx (f (n f x))
 (Church.Nat.add) =λm λn
     (λf λx (m f (n f x)))
 (Church.Nat.mult) = λm λn λf (m (n f))
+(Church.Nat.pred) =  λn λf λx (n (λg λh (h (g f))) (λu (x)) (λu (u)))
+(Church.Nat.sub) = λm λn  (n ((Church.Nat.pred) m))
+(Church.Nat.test_one_less_one_is_zero) =
+     ((Church.Bool.toBool) ((Church.Nat.isZero) ((Church.Nat.sub) (Church.Nat.one) (Church.Nat.one))))
+
+(Church.Nat.test_zero_less_one_is_zero) = ((Church.Bool.toBool) ((Church.Nat.isZero) ((Church.Nat.sub) (Church.Nat.zero) (Church.Nat.one))))
+(Church.Nat.lt) = λm λn
+    let isMlessThanN = ((Church.Nat.is_zero) ((Church.Nat.sub) m n))
+    let isNnotLessThanM = ((Church.Bool.not) ((Church.Nat.is_zero) ((Church.Nat.sub) n m)))
+    ((Church.Bool.and) isMlessThanN isNnotLessThanM)
+(Church.Nat.mk_test_lt) = λz λo
+    let shouldBeTrue = ((Church.Nat.lt) z o)
+    let shouldBeFalse = ((Church.Nat.lt) o z)
+    let shouldAlsoBeFalse = ((Church.Nat.lt) z z)
+    let shouldAlsoAlsoBeFalse = ((Church.Nat.lt) o o)
+    let falsesAreFalse = ((Church.Bool.not) ((Church.Bool.and) ((Church.Bool.and) shouldBeFalse shouldAlsoBeFalse) shouldAlsoAlsoBeFalse))
+    // ((Church.Bool.toBool)  ((Church.Bool.and) shouldBeTrue falsesAreFalse))
+    ((Church.Bool.toBool)  shouldAlsoAlsoBeFalse)
+
+(Church.Nat.test_lt) = ((Church.Nat.mk_test_lt) (Church.Nat.zero) (Church.Nat.one))
+
 (Church.Nat.toChurchInt) = λi
     ((Church.pair) i (λf λx (x)))
 
@@ -45,7 +79,7 @@ Church.List.cons = λh λt ((Church.pair) (Church.Bool.false) ((Church.pair) h t
 Church.List.head = λz ((Church.fst) ((Church.snd) z))
 Church.List.tail = λz ((Church.snd) ((Church.snd) z))
 
-Church.List.test =
+Church.List.test_can_take_head_and_tail =
     let t = ((Church.List.cons) (Church.Bool.false) (Church.List.nil))
     let h = ((Church.List.cons) (Church.Bool.true) t)
     let shouldBeTrue = ((Church.List.head) h)
@@ -53,5 +87,5 @@ Church.List.test =
     ((Church.Bool.toBool) ((Church.Bool.and) shouldBeTrue ((Church.Bool.not) shouldBeFalse)))
 
 (Main) =
-    (Church.List.test)
+    (Church.Bool.xor_test)
 
