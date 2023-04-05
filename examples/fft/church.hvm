@@ -1,91 +1,179 @@
+// Church Encoded Datatypes
+// ------------------------
 
-(Church.Bool.true) = λt λf (t)
-(Church.Bool.false) = λt λf (f)
-(Church.Bool.not) =  λp λa λb (p b a)
-// -- Church XOR
-// -- λa.λb.a (not b) b
-(Church.Bool.xor) = λa λb (a ((Church.Bool.not) b) b)
-(Church.Bool.xor_test) =
-    let shouldBeTrue = (((Church.Bool.xor) (Church.Bool.true) (Church.Bool.false)))
-    let shouldBeFalse = (((Church.Bool.xor) (Church.Bool.true) (Church.Bool.true)))
-    ((Church.Bool.toBool) ((Church.Bool.and) shouldBeTrue shouldBeFalse))
-(True) = "True"
-(False) = "False"
-(Church.Bool.toBool) = λv ((Church.ifElse) v True False)
-(Church.Bool.test_not_false_is_true) = ((Church.Bool.toBool) ((Church.Bool.not) (Church.Bool.false)))
-(Church.Bool.test_not_true_is_false) = ((Church.Bool.toBool) ((Church.Bool.not) (Church.Bool.true)))
-(Church.ifElse) = λtv λthen λelse (tv then else)
-(Church.Nat.zero) = λf λx (x)
-(Church.Nat.one) = λf λx (f x)
-(Church.Nat.isZero) = λn (n (λx (Church.Bool.false)) Church.Bool.true)
-(Church.Nat.test_zero_is_zero) =
-    let zIsz =  ((Church.Nat.isZero) (Church.Nat.zero))
-    let oNotz = ((Church.Boo.not) ((Church.Nat.isZero) (Church.Nat.one)))
-    ((Church.Bool.toBool) ((Church.Bool.and) zIsz oNotz))
-Church.Nat.succ = λn λf λx (f (n f x))
-(Church.Nat.toChurch 0) = (λf λx (x))
-(Church.Nat.toChurch n) =
-    let next = (Church.Nat.toChurch(- n 1))
-    (λf λx (f (next f x)))
+// Church Encoded Booleans
+(Church.Bool.True) = λt λf (t)
+(Church.Bool.False) = λt λf (f)
+(Church.Bool.toU60) = λb (b 1 0)
+(Church.Bool.toString) = λb (b "True" "false")
+(Church.Bool.And) = λa λb (a b (Church.Bool.False))
+(Church.Bool.Or) = λa λb (a (Church.Bool.True) b)
+(Church.Bool.Not) = λp λa λb (p b a)
+(Church.Bool.Xor) = λa λb (a ((Church.Bool.Not) b) b)
+(Church.Bool.IfElse) = λp λa λb (p a b)
 
-(Church.Nat.toNat a) =  (a (λb (+ b 1)) 0)
+// Church Encoded Natural Numbers
+(Church.Nat.zero) = λs λz z
+(Church.Nat.succ) = λn λs λz (s (n s z))
+(Church.Nat.one) = ((Church.Nat.succ) (Church.Nat.zero))
+(Church.Nat.three) = ((Church.Nat.succ) (((Church.Nat.succ) ((Church.Nat.succ) (Church.Nat.zero) ))))
+(Church.Nat.pred) = λn λs λz (n (λg λh (h (g s)) (λu z) (λu u)))
+(Church.Nat.sum) = λm λn ((m (Church.Nat.succ)) n)
+(Church.Nat.toU60) = λn (n (λx (+ 1 x)) 0)
+// Church-encoded Nat: IsZero
+(Church.Nat.IsZero) = λn (n (λ_ (Church.Bool.False)) (Church.Bool.True))
 
-(Church.pair) = λa λb (λg (g a b))
-(Church.fst) =  λp (p (λx λy (x)))
-(Church.snd) =  λp (p (λx λy (y)))
+// Church Encoded Natural Numbers Tests
+(Church.Nat.Test.Zero_is_Zero) = (== 0 ((Church.Nat.toU60) (Church.Nat.zero)))
+(Church.Nat.Test.One_is_One) = (== 1 ((Church.Nat.toU60) ((Church.Nat.succ) (Church.Nat.zero))))
 
-(Church.Nat.add) =λm λn
-    (λf λx (m f (n f x)))
-(Church.Nat.mult) = λm λn λf (m (n f))
-(Church.Nat.pred) =  λn λf λx (n (λg λh (h (g f))) (λu (x)) (λu (u)))
-(Church.Nat.sub) = λm λn  (n ((Church.Nat.pred) m))
-(Church.Nat.test_one_less_one_is_zero) =
-     ((Church.Bool.toBool) ((Church.Nat.isZero) ((Church.Nat.sub) (Church.Nat.one) (Church.Nat.one))))
+// Scott Encoded Datatypes
+// -----------------------
 
-(Church.Nat.test_zero_less_one_is_zero) = ((Church.Bool.toBool) ((Church.Nat.isZero) ((Church.Nat.sub) (Church.Nat.zero) (Church.Nat.one))))
-(Church.Nat.lt) = λm λn
-    let isMlessThanN = ((Church.Nat.is_zero) ((Church.Nat.sub) m n))
-    let isNnotLessThanM = ((Church.Bool.not) ((Church.Nat.is_zero) ((Church.Nat.sub) n m)))
-    ((Church.Bool.and) isMlessThanN isNnotLessThanM)
-(Church.Nat.mk_test_lt) = λz λo
-    let shouldBeTrue = ((Church.Nat.lt) z o)
-    let shouldBeFalse = ((Church.Nat.lt) o z)
-    let shouldAlsoBeFalse = ((Church.Nat.lt) z z)
-    let shouldAlsoAlsoBeFalse = ((Church.Nat.lt) o o)
-    let falsesAreFalse = ((Church.Bool.not) ((Church.Bool.and) ((Church.Bool.and) shouldBeFalse shouldAlsoBeFalse) shouldAlsoAlsoBeFalse))
-    // ((Church.Bool.toBool)  ((Church.Bool.and) shouldBeTrue falsesAreFalse))
-    ((Church.Bool.toBool)  shouldAlsoAlsoBeFalse)
+// Scott Encoded Natural Numbers
+(Scott.Nat.Zero) = λz λs z
+(Scott.Nat.Succ) = λn λz λs (s n)
+(Scott.Nat.One) =((Scott.Nat.Succ) (Scott.Nat.Zero))
+(Scott.Nat.Three) = ((Scott.Nat.Succ) ((Scott.Nat.Succ) (Scott.Nat.One)))
+(Scott.Nat.foldNat) = λf λz λn (n z (λn (f ((Scott.Nat.foldNat) f z n))))
+(Scott.Nat.Add) = λn λm ((Scott.Nat.foldNat) (Scott.Nat.Succ) n m)
+(Scott.Nat.divByTwo) = λn
+    let initPair = ((Scott.Pair) (Scott.Nat.Zero) n)
+    let updatePair = λx
+        let q = ((Scott.Pair.Fst) x)
+        let r = ((Scott.Pair.Snd) x)
+        let newR = ((Scott.Nat.Succ) r)
+        let newQ = ((Scott.Nat.Succ) q)
+        let newPair = ((Church.Bool.IfElse) ((Scott.Nat.IsZero) r) ((Scott.Pair) newQ newR) ((Scott.Pair) q newR))
+        ((Scott.Pair.Swap) newPair)
+    ((Scott.Nat.foldNat) updatePair initPair n)
+(Scott.Nat.fromU60 0) = (Scott.Nat.Zero)
+(Scott.Nat.fromU60 m) = ((Scott.Nat.Succ) (Scott.Nat.fromU60 (- m 1)))
+// Scott-encoded Nat: IsZero
+(Scott.Nat.IsZero) = λn ((Scott.Nat.foldNat) (λx (Church.Bool.False)) (Church.Bool.True) n)
 
-(Church.Nat.test_lt) = ((Church.Nat.mk_test_lt) (Church.Nat.zero) (Church.Nat.one))
 
-(Church.Nat.toChurchInt) = λi
-    ((Church.pair) i (λf λx (x)))
+// Scott Encoded Pairs
+(Scott.Pair) = λa λb λf (f a b)
+(Scott.Pair.Fst) = λp (p (λa λb a))
+(Scott.Pair.Snd) = λp (p (λa λb b))
+(Scott.Pair.Swap) = λp (p (λa λb ((Scott.Pair) b a)))
 
-(Church.Int.neg) = λx
-    ((Church.pair) ((Church.snd) x) ((Church.fst) x))
+// Scott Encoded Lists
+(Scott.List.Nil) = λn λc n
+(Scott.List.Cons) = λx λxs λn λc (c x xs)
+(Scott.List.Foldr) = λf λz λxs (xs z (λx λxs (f x ((Scott.List.Foldr) f z xs))))
+(Scott.List.Zip) = λxs λys
+    let fn = λx λr
+        let consFn = λy λrr ((Scott.List.Cons) ((Scott.Pair) x y) rr)
+        ((Scott.List.Foldr) consFn r ys)
+    ((Scott.List.Foldr) fn (Scott.List.Nil) xs)
 
-(Church.Int.toInt x) =
-    (Tuple (Church.toNat ((Church.fst) x)) (Church.toNat ((Church.snd) x)))
+(Scott.Nat.toU60) = λn ((Scott.Nat.foldNat) (λx (+ 1 x)) 0 n)
 
-(IntToChurchInt i) = (ChurchNatToChurchInt (NatToChurch i))
+(Scott.Nat.toBinary) = λn
+    (λx
+        ((Church.Bool.IfElse)
+            ((Scott.Nat.IsZero) x)
+            (Scott.List.Nil)
+            ((Scott.List.Cons)
+                ((Scott.Nat.IsZero) ((Scott.Pair.Fst) ((Scott.Nat.divByTwo) x)))
+                ((Scott.Nat.toBinary) ((Scott.Pair.Snd) ((Scott.Nat.divByTwo) x)))
+            )
+        )
+    n)
 
-Church.Bool.and = λa λb (a b Church.Bool.false)
-Church.Bool.or = λa λb (a Church.Bool.true b)
-Church.Bool.test = ((Church.Bool.toBool) ((Church.Bool.or) (Church.Bool.false) (Church.Bool.false)))
+(Scott.Nat.fromBinary) = λxs
+    let initAcc = ((Scott.Pair) (Scott.Nat.Zero) (Scott.Nat.One))
+    let updateAcc = λx λacc
+        let currentSum = ((Scott.Pair.Fst) acc)
+        let currentPower = ((Scott.Pair.Snd) acc)
+        let updatedSum = ((Church.Bool.IfElse) x ((Scott.Nat.Add) currentSum currentPower) currentSum)
+        let nextPower = ((Scott.Nat.Add) currentPower currentPower)
+        ((Scott.Pair) updatedSum nextPower)
+    ((Scott.Pair.Fst) ((Scott.List.Foldr) updateAcc initAcc xs))
 
-Church.List.nil = ((Church.pair) (Church.Bool.true) (Church.Bool.true))
-Church.List.isNil = (Church.fst)
-Church.List.cons = λh λt ((Church.pair) (Church.Bool.false) ((Church.pair) h t))
-Church.List.head = λz ((Church.fst) ((Church.snd) z))
-Church.List.tail = λz ((Church.snd) ((Church.snd) z))
 
-Church.List.test_can_take_head_and_tail =
-    let t = ((Church.List.cons) (Church.Bool.false) (Church.List.nil))
-    let h = ((Church.List.cons) (Church.Bool.true) t)
-    let shouldBeTrue = ((Church.List.head) h)
-    let shouldBeFalse = ((Church.List.head) ((Church.List.tail) h))
-    ((Church.Bool.toBool) ((Church.Bool.and) shouldBeTrue ((Church.Bool.not) shouldBeFalse)))
 
-(Main) =
-    (Church.Bool.xor_test)
 
+
+// Test: Scott.Nat.IsZero for Scott-encoded Zero
+(Scott.Nat.Test.IsZero_Zero) = ((Church.Bool.toU60) ((Scott.Nat.IsZero) (Scott.Nat.Zero)))
+
+// Test: Scott.Nat.IsZero for Scott-encoded One
+(Scott.Nat.Test.IsZero_One) = ((Church.Bool.toU60) ((Church.Bool.Not) ((Scott.Nat.IsZero) ((Scott.Nat.Succ) (Scott.Nat.Zero)))))
+
+// Test: Church.Nat.IsZero for Church-encoded Zero
+(Church.Nat.Test.IsZero_Zero) = ((Church.Bool.toU60) ((Church.Nat.IsZero) (Church.Nat.zero)))
+
+// Test: Church.Nat.IsZero for Church-encoded One
+(Church.Nat.Test.IsZero_One) = ((Church.Bool.toU60) ((Church.Bool.Not) ((Church.Nat.IsZero) ((Church.Nat.succ) (Church.Nat.zero)))))
+
+
+// Scott Encoded Natural Numbers Tests
+(Scott.Nat.Test.Zero_is_Zero) = (== 0 ((Scott.Nat.toU60) (Scott.Nat.Zero)))
+(Scott.Nat.Test.One_is_One) = (== 1 ((Scott.Nat.toU60) ((Scott.Nat.Succ) (Scott.Nat.Zero))))
+(Scott.Nat.Test.divByTwo) = λnU60
+    let n = (Scott.Nat.fromU60 nU60)
+    let divByTwoResult = ((Scott.Pair.Fst) ((Scott.Nat.divByTwo) n))
+    (== (/ nU60 2) ((Scott.Nat.toU60) divByTwoResult))
+
+(Scott.Nat.Test.divByTwo_KnownValue) = (& ((Scott.Nat.Test.divByTwo) 10) ((Scott.Nat.Test.divByTwo) 0))
+
+// Scott Encoded Natural Numbers To/From binary Tests
+(Scott.Nat.Test.BinaryConversion) = λn
+    let scottNat = (Scott.Nat.fromU60 n)
+    let binaryList = ((Scott.Nat.toBinary) scottNat)
+    let recoveredNat = ((Scott.Nat.fromBinary) binaryList)
+    ((Scott.Nat.toU60) recoveredNat)
+    // (== n ((Scott.Nat.toU60) recoveredNat))
+
+
+(Scott.Nat.Test.BinaryConversion_Result) = ((Scott.Nat.Test.BinaryConversion) 2)
+
+
+// Scott Encoded Lists Functions and Tests
+(Scott.List.Sum) = λxs ((Scott.List.Foldr) (Scott.Nat.Add) (Scott.Nat.Zero) xs)
+(Scott.List.Test.Sum_EmptyList_is_Zero) = (== 0 ((Scott.Nat.toU60) ((Scott.List.Sum) (Scott.List.Nil))))
+(Scott.List.Test.Sum_SingleElementList_is_Element) = (== 3 ((Scott.Nat.toU60) ((Scott.List.Sum) ((Scott.List.Cons) (Scott.Nat.Three) (Scott.List.Nil)))))
+(Scott.List.Test.Sum_MultiElementList_is_Sum) = (== 9 ((Scott.Nat.toU60) ((Scott.List.Sum) ((Scott.List.Cons) (Scott.Nat.Three) ((Scott.List.Cons) (Scott.Nat.Three) ((Scott.List.Cons) (Scott.Nat.Three) (Scott.List.Nil)))))))
+(Scott.List.replicate) = λitem λscottNatural
+    let consItem = λr ((Scott.List.Cons) item r)
+    ((Scott.Nat.foldNat) consItem (Scott.List.Nil) scottNatural)
+
+// Scott Encoded Lists Zip Sum Test
+(Scott.List.Test.Zip_Sum_Check) = λxs
+let zipped = ((Scott.List.Zip) xs xs)
+let sumFirst = ((Scott.List.Foldr) (λp λacc ((Scott.Nat.Add) ((Scott.Pair.Fst) p) acc)) (Scott.Nat.Zero) zipped)
+let sumSecond = ((Scott.List.Foldr) (λp λacc ((Scott.Nat.Add) ((Scott.Pair.Snd) p) acc)) (Scott.Nat.Zero) zipped)
+(== ((Scott.Nat.toU60) sumFirst) ((Scott.Nat.toU60) sumSecond))
+
+// Scott Encoded Lists Test Sample List
+(Scott.List.Test.Sample_List) = ((Scott.List.Cons) (Scott.Nat.Zero)
+((Scott.List.Cons) ((Scott.Nat.Succ) (Scott.Nat.Zero))
+((Scott.List.Cons) ((Scott.Nat.Succ) ((Scott.Nat.Succ) (Scott.Nat.Zero))) (Scott.List.Nil))))
+
+// Scott Encoded Lists Test Zip Sum Check Result
+(Scott.List.Test.Zip_Sum_Check_Result) = ((Scott.List.Test.Zip_Sum_Check) (Scott.List.Test.Sample_List))
+
+// Test: Create a list of 32 ones and sum it
+(Scott.List.Test.Sum_ReplicateOnes) =
+    let onesList = ((Scott.List.replicate) (Scott.Nat.One) (Scott.Nat.fromU60 32))
+    let sum = ((Scott.List.Sum) onesList)
+    (== 32 ((Scott.Nat.toU60) sum))
+
+
+// Main
+(Main) = (Scott.Nat.Test.BinaryConversion_Result)
+// (Main) = (& (Scott.Nat.Test.Zero_is_Zero)
+// (& (Scott.Nat.Test.One_is_One)
+// (& (Scott.List.Test.Sum_EmptyList_is_Zero)
+// (& (Scott.Nat.Test.IsZero_Zero)
+// (& (Scott.Nat.Test.IsZero_One)
+// (& (Church.Nat.Test.IsZero_Zero)
+// (& (Church.Nat.Test.IsZero_One)
+// (& (Scott.Nat.Test.divByTwo_KnownValue)
+// (& (Scott.List.Test.Sum_SingleElementList_is_Element)
+// (& (Scott.List.Test.Sum_MultiElementList_is_Sum)
+// (& (Scott.List.Test.Zip_Sum_Check_Result)
+//    (Scott.List.Test.Sum_ReplicateOnes))))))))))))
